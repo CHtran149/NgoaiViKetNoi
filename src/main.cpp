@@ -6,8 +6,8 @@ CLCD_Name LCD1;
 
 // --- Cấu hình chân kết nối ---
 // Chân điều khiển trực tiếp
-#define LCD_RS_PIN    16
-#define LCD_EN_PIN    17
+#define LCD_RS_PIN    4
+#define LCD_EN_PIN    2
 
 // Chân giao tiếp với IC 74HC595
 #define SIPO_DS       23  // Serial Data (Chân 14 của 595)
