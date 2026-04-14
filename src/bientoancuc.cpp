@@ -11,4 +11,4 @@ uint8_t hang[8] = {
 };
 
 int count = 0;
-int direction = 1;
+Direction direction = DIR_NONE;

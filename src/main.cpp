@@ -1,55 +1,68 @@
 #include <Arduino.h>
-#include "quetled.h"
 #include "bientoancuc.h"
+#include "button.h"
+#include "quetled.h"
 
-// ===== FONT A =====
+#define SIPO_DS   23
+#define SIPO_SHCP 18
+#define SIPO_STCP 5
 
+int currentX = 4;
+int currentY = 4;
 
-uint8_t fontT[8] = {
-  0x7E,
-  0x18,
-  0x18,
-  0x18,
-  0x18,
-  0x18,
-  0x18,
-  0x00
-};
+const uint8_t MAU_COT[8]  = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+const uint8_t MAU_HANG[8] = {0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F};
 
-uint8_t fontI[8] = {
-  0x7E,
-  0x18,
-  0x18,
-  0x18,
-  0x18,
-  0x18,
-  0x7E,
-  0x00
-};
+void CapNhatToaDo(int x, int y) {
+    // Tắt toàn bộ dữ liệu quét trước khi nạp điểm mới
+    for (int i = 0; i < 8; i++) {
+        hang[i] = 0xFF; // Tắt cực âm (GND)
+        cot[i]  = 0x00; // Tắt cực dương (VCC)
+    }
 
-void HienThiChu(uint8_t *font, int time_ms)
-{
-    unsigned long t = millis();
-
-    while(millis() - t < time_ms)
-    {
-        for(int i = 0; i < 8; i++)
-        {
-            cot[i] = font[i];
-        }
-
-        QuetLed_Matrix();
+    // Nạp điểm sáng duy nhất vào đúng mảng quetled đang dùng
+    if (y >= 0 && y < 8) {
+        hang[y] = MAU_HANG[y];
+        cot[y]  = MAU_COT[x];
     }
 }
 
-void setup()
-{
-    QuetLed_Init(23, 18, 5);
-
-    // Gán dữ liệu chữ A vào buffer
+void setup() {
+    Button_Init();
+    QuetLed_Init(SIPO_DS, SIPO_SHCP, SIPO_STCP);
+    CapNhatToaDo(currentX, currentY);
 }
 
-void loop()
-{
-    HienThiChu(fontT, 1000);
+void loop() {
+    static Direction lastInput = DIR_NONE; 
+    
+    // Lấy giá trị tức thời từ nút bấm
+    Direction currentInput = Button_ReadDirection(DIR_NONE);
+
+    // CHỐNG NHẢY LED: Chỉ thực hiện khi có sự thay đổi trạng thái nút
+    if (currentInput != lastInput) {
+        if (currentInput != DIR_NONE) {
+            switch (currentInput) {
+                case DIR_UP:    if (currentY > 0) currentY--; break; 
+                case DIR_DOWN:  if (currentY < 7) currentY++; break; 
+                
+                // ĐÃ ĐẢO LẠI TRÁI/PHẢI THEO PHẢN HỒI CỦA BẠN
+                case DIR_LEFT:  if (currentX < 7) currentX++; break; // Đổi từ -- thành ++
+                case DIR_RIGHT: if (currentX > 0) currentX--; break; // Đổi từ ++ thành --
+                
+                default: break;
+            }
+            CapNhatToaDo(currentX, currentY);
+        }
+        lastInput = currentInput; 
+    }
+
+    if (Button_IsReset()) {
+        currentX = 4; currentY = 4;
+        lastInput = DIR_NONE;
+        CapNhatToaDo(currentX, currentY);
+    }
+
+    // QUÉT LED
+    QuetLed_Matrix();
 }
