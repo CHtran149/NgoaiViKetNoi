@@ -16,7 +16,7 @@ typedef enum {
 void Button_Init();
 
 // ===== ĐỌC HƯỚNG =====
-Direction Button_ReadDirection(Direction currentDir);
+Direction Button_ReadDirection();
 
 // ===== RESET =====
 bool Button_IsReset();

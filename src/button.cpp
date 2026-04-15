@@ -2,8 +2,8 @@
 
 #define BTN_UP    32
 #define BTN_DOWN  33
-#define BTN_LEFT  25
-#define BTN_RIGHT 26
+#define BTN_LEFT  26
+#define BTN_RIGHT 25
 #define BTN_RESET 27
 
 static unsigned long lastPressTime = 0;
@@ -17,31 +17,32 @@ void Button_Init() {
     pinMode(BTN_RESET, INPUT_PULLUP);
 }
 
-Direction Button_ReadDirection(Direction currentDir) {
-    // Nếu chưa qua thời gian chống rung, trả về NONE (không làm gì cả)
-    if (millis() - lastPressTime < DEBOUNCE_TIME) 
-        return DIR_NONE; 
+Direction Button_ReadDirection() {
+    static Direction lastDirection = DIR_NONE;
+    Direction currentDirection = DIR_NONE;
 
-    // Kiểm tra từng nút
     if (digitalRead(BTN_UP) == LOW) {
-        lastPressTime = millis();
-        return DIR_UP;
-    }
-    if (digitalRead(BTN_DOWN) == LOW) {
-        lastPressTime = millis();
-        return DIR_DOWN;
-    }
-    if (digitalRead(BTN_LEFT) == LOW) {
-        lastPressTime = millis();
-        return DIR_LEFT;
-    }
-    if (digitalRead(BTN_RIGHT) == LOW) {
-        lastPressTime = millis();
-        return DIR_RIGHT;
+        currentDirection = DIR_UP;
+    } else if (digitalRead(BTN_DOWN) == LOW) {
+        currentDirection = DIR_DOWN;
+    } else if (digitalRead(BTN_LEFT) == LOW) {
+        currentDirection = DIR_LEFT;
+    } else if (digitalRead(BTN_RIGHT) == LOW) {
+        currentDirection = DIR_RIGHT;
     }
 
-    // Nếu không nhấn gì cả, PHẢI trả về NONE
-    return DIR_NONE; 
+    if (currentDirection == DIR_NONE) {
+        lastDirection = DIR_NONE;
+        return DIR_NONE;
+    }
+
+    if (currentDirection != lastDirection || millis() - lastPressTime > DEBOUNCE_TIME) {
+        lastPressTime = millis();
+        lastDirection = currentDirection;
+        return currentDirection;
+    }
+
+    return DIR_NONE;
 }
 
 bool Button_IsReset() {
