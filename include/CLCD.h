@@ -65,7 +65,7 @@ void CLCD_595_8BIT_Init(CLCD_Name* LCD, uint8_t Colum, uint8_t Row,
 
 void CLCD_SetCursor(CLCD_Name* LCD, uint8_t Xpos, uint8_t YPos);
 void CLCD_WriteChar(CLCD_Name* LCD, char character);
-void CLCD_WriteString(CLCD_Name* LCD, char *String);
+void CLCD_WriteString(CLCD_Name* LCD, const char *String);
 void CLCD_Clear(CLCD_Name* LCD);
 void CLCD_ReturnHome(CLCD_Name* LCD);
 

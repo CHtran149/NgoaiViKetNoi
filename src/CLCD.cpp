@@ -49,10 +49,18 @@ void CLCD_595_8BIT_Init(CLCD_Name* LCD, uint8_t Colum, uint8_t Row,
     LCD->DISPLAYCTRL = LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
     LCD->CURSORSHIFT = LCD_CURSORSHIFT | LCD_CURSORMOVE | LCD_MOVERIGHT;
 
+    // Gửi lệnh FUNCTIONSET 3 lần để đảm bảo LCD nhận dạng mode 8-bit
     CLCD_Write8(LCD, LCD->FUNCTIONSET, CLCD_COMMAND);
     delay(5);
+    CLCD_Write8(LCD, LCD->FUNCTIONSET, CLCD_COMMAND);
+    delay(5);
+    CLCD_Write8(LCD, LCD->FUNCTIONSET, CLCD_COMMAND);
+    delay(5);
+    
     CLCD_Write8(LCD, LCD->DISPLAYCTRL, CLCD_COMMAND);
+    delay(2);
     CLCD_Write8(LCD, LCD->ENTRYMODE, CLCD_COMMAND);
+    delay(2);
     
     CLCD_Clear(LCD);
 }
@@ -69,7 +77,7 @@ void CLCD_WriteChar(CLCD_Name* LCD, char character) {
     CLCD_Write8(LCD, character, CLCD_DATA);
 }
 
-void CLCD_WriteString(CLCD_Name* LCD, char *String) {
+void CLCD_WriteString(CLCD_Name* LCD, const char *String) {
     while (*String) CLCD_WriteChar(LCD, *String++);
 }
 

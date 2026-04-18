@@ -1,3 +1,6 @@
+﻿#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include "button.h"
 
 #define BTN_UP    32
@@ -6,8 +9,49 @@
 #define BTN_RIGHT 25
 #define BTN_RESET 27
 
-static unsigned long lastPressTime = 0;
-#define DEBOUNCE_TIME 200 // Tăng lên một chút nếu nút bấm bị lỏng
+static QueueHandle_t buttonQueue = NULL;
+static volatile TickType_t lastInterruptTick = 0;
+#define DEBOUNCE_TIME_MS 50
+
+static void IRAM_ATTR Button_SendEventFromISR(ButtonEventType eventType, Direction direction)
+{
+    if (buttonQueue == NULL) {
+        return;
+    }
+
+    TickType_t currentTick = xTaskGetTickCountFromISR();
+    if ((currentTick - lastInterruptTick) < pdMS_TO_TICKS(DEBOUNCE_TIME_MS)) {
+        return;
+    }
+    lastInterruptTick = currentTick;
+
+    ButtonEvent event = { .type = eventType, .direction = direction };
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xQueueSendFromISR(buttonQueue, &event, &xHigherPriorityTaskWoken);
+    if (xHigherPriorityTaskWoken == pdTRUE) {
+        portYIELD_FROM_ISR();
+    }
+}
+
+static void IRAM_ATTR Button_UpISR() {
+    Button_SendEventFromISR(BUTTON_TYPE_DIRECTION, DIR_UP);
+}
+
+static void IRAM_ATTR Button_DownISR() {
+    Button_SendEventFromISR(BUTTON_TYPE_DIRECTION, DIR_DOWN);
+}
+
+static void IRAM_ATTR Button_LeftISR() {
+    Button_SendEventFromISR(BUTTON_TYPE_DIRECTION, DIR_LEFT);
+}
+
+static void IRAM_ATTR Button_RightISR() {
+    Button_SendEventFromISR(BUTTON_TYPE_DIRECTION, DIR_RIGHT);
+}
+
+static void IRAM_ATTR Button_ResetISR() {
+    Button_SendEventFromISR(BUTTON_TYPE_RESET, DIR_NONE);
+}
 
 void Button_Init() {
     pinMode(BTN_UP, INPUT_PULLUP);
@@ -17,31 +61,25 @@ void Button_Init() {
     pinMode(BTN_RESET, INPUT_PULLUP);
 }
 
+void Button_SetupInterrupts(QueueHandle_t queue) {
+    buttonQueue = queue;
+    attachInterrupt(digitalPinToInterrupt(BTN_UP), Button_UpISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BTN_DOWN), Button_DownISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BTN_LEFT), Button_LeftISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BTN_RIGHT), Button_RightISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BTN_RESET), Button_ResetISR, FALLING);
+}
+
 Direction Button_ReadDirection() {
-    static Direction lastDirection = DIR_NONE;
-    Direction currentDirection = DIR_NONE;
-
     if (digitalRead(BTN_UP) == LOW) {
-        currentDirection = DIR_UP;
+        return DIR_UP;
     } else if (digitalRead(BTN_DOWN) == LOW) {
-        currentDirection = DIR_DOWN;
+        return DIR_DOWN;
     } else if (digitalRead(BTN_LEFT) == LOW) {
-        currentDirection = DIR_LEFT;
+        return DIR_LEFT;
     } else if (digitalRead(BTN_RIGHT) == LOW) {
-        currentDirection = DIR_RIGHT;
+        return DIR_RIGHT;
     }
-
-    if (currentDirection == DIR_NONE) {
-        lastDirection = DIR_NONE;
-        return DIR_NONE;
-    }
-
-    if (currentDirection != lastDirection || millis() - lastPressTime > DEBOUNCE_TIME) {
-        lastPressTime = millis();
-        lastDirection = currentDirection;
-        return currentDirection;
-    }
-
     return DIR_NONE;
 }
 
