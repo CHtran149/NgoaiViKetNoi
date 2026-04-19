@@ -34,7 +34,7 @@ static void TaskLCD(void *pvParameters)
 
     CLCD_Clear(&lcd);
     CLCD_SetCursor(&lcd, 0, 0);
-    CLCD_WriteString(&lcd, "Nhom2_NVGN");
+    CLCD_WriteString(&lcd, " Nhom2_NVGN");
 
     CLCD_SetCursor(&lcd, 0, 1);
     snprintf(buffer, sizeof(buffer), "Scores: %d", currentScore);
@@ -110,7 +110,7 @@ static void TaskSnake(void *pvParameters)
         }
 
         QuetLed_Matrix();
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(2));
     }
 }
 
