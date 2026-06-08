@@ -5,8 +5,8 @@
 
 #define BTN_UP    32
 #define BTN_DOWN  33
-#define BTN_LEFT  26
-#define BTN_RIGHT 25
+#define BTN_LEFT  25
+#define BTN_RIGHT 26
 #define BTN_RESET 27
 
 static QueueHandle_t buttonQueue = NULL;
